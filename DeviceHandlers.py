@@ -117,3 +117,17 @@ class DeviceHandler(webapp2.RequestHandler):
     def get_auth(self):
         return self.request.query["token"]
 
+
+class UnsplashPhoto:
+
+    def __init__(self, query):
+        self.photo_url = None
+        self.photo_title = None
+        self.author_name = None
+        self.author_profile_url = None
+
+    def _query(self, query):
+        self.photo_url = "https://unsplash.com/photos/D1wiHCovGJ0"
+        self.photo_title = "Just Hanging Around"
+        self.author_name = "Erda Estremera"
+        self.author_profile_url = "https://unsplash.com/@erdaest"

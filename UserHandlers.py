@@ -5,6 +5,7 @@ from User import User
 from Utils import *
 
 
+
 # The basic approach for my list handlers is taken from my work on Assignment 3.
 class UserListHandler(webapp2.RequestHandler):
 
@@ -26,15 +27,18 @@ class UserListHandler(webapp2.RequestHandler):
 
         # TODO: Not thread-safe!! But probably not an issue in this course.
         # TODO: Move to the model.
-        existing = User.query().filter(User.external_id == request_data["external_id"]).fetch(1)
+        existing = User.query().filter(User.unsplash_token == request_data["unsplash_token"]).fetch(1)
         if existing:
             send_error(self.response, 400,
                        response_message_json("FAILURE",
-                                             "Users should be unique: {}".format(request_data["external_id"])))
+                                             "Users should be unique: {}".format(request_data["unsplash_token"])))
             return
 
-        user = User(external_id=request_data["external_id"], name=request_data["name"], email=request_data["email"],
-                    default_image_query=request_data["default_image_query"], summary_bio=request_data["summary_bio"])
+        # TODO: Fetch the user details from Unsplash, and use the Unsplash profile details as defaults.
+
+        user = User(unsplash_token=request_data["unsplash_token"], name=request_data["name"],
+                    email=request_data["email"], default_image_query=request_data["default_image_query"],
+                    favorite_topics=request_data["favorite_topics"])
         user.put()
 
         send_success(self.response, json.dumps(user.to_json_ready()))
@@ -98,4 +102,4 @@ class UserHandler(webapp2.RequestHandler):
         send_success(self.response, None)
 
     def get_auth(self):
-        return self.request.query["token"]
+        return self.request.query["unsplash_token"]
