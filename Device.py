@@ -1,5 +1,5 @@
 from google.appengine.ext import ndb
-import User
+from User import User
 
 
 class Device(ndb.Model):
@@ -21,7 +21,7 @@ class Device(ndb.Model):
     @classmethod
     def get_by_id(cls, user_id, device_id):
         # Hierarchical key logic taken from the Google Cloud Datastore documentation.
-        device = ndb.Key(User, long(user_id), Device, long(device_id)).get()
+        device = ndb.Key(User, long(user_id), cls, long(device_id)).get()
         return device
 
     def to_json_ready(self):

@@ -3,7 +3,7 @@ import webapp2
 import Device
 from User import User
 from Utils import *
-
+import logging
 
 
 # The basic approach for my list handlers is taken from my work on Assignment 3.
@@ -18,7 +18,7 @@ class UserListHandler(webapp2.RequestHandler):
 
         users_json = []
         for user in users:
-            users_json.append(user.to_public_json_ready())
+            users_json.append(user.to_json_ready())
 
         send_success(self.response, json.dumps(users_json))
 
@@ -41,7 +41,7 @@ class UserListHandler(webapp2.RequestHandler):
                     favorite_topics=request_data["favorite_topics"])
         user.put()
 
-        send_success(self.response, json.dumps(user.to_json_ready()))
+        send_success(self.response, json.dumps(user.to_private_json_ready()))
 
 
 # The basic approach for my entity handlers is taken from my work on Assignment 3.
@@ -49,24 +49,35 @@ class UserHandler(webapp2.RequestHandler):
 
     def get(self, user_id):
 
-        requested_user = User.get_by_id(long(user_id))
+        user = User.get_by_id(long(user_id))
 
         # FIXME: Error handling
 
-        if not requested_user:
+        if not user:
             send_error(self.response, 404)
             return
 
-        auth_user = User.get_by_external_id(self.get_auth())
+        auth_user = self.get_auth()
 
-        if auth_user.key.id() == requested_user.key.id():
-            send_success(self.response, json.dumps(requested_user.to_json_ready()))
+        if auth_user and auth_user.key.id() == user.key.id():
+            send_success(self.response, json.dumps(user.to_private_json_ready()))
         else:
-            send_success(self.response, json.dumps(requested_user.to_public_json_ready()))
+            send_success(self.response, json.dumps(user.to_json_ready()))
 
     def put(self, user_id):
 
         user = User.get_by_id(user_id)
+
+        # FIXME: Error handling
+
+        if not user:
+            send_error(self.response, 404)
+            return
+
+        auth_user = self.get_auth()
+        if (not auth_user) or auth_user.key.id() != user.key.id():
+            send_error(self.response, 401)
+            return
 
         request_data = json.loads(self.request.body)
         if "name" in request_data and request_data["name"]:
@@ -75,12 +86,12 @@ class UserHandler(webapp2.RequestHandler):
             user.email = request_data["email"]
         if "default_image_query" in request_data and request_data["default_image_query"]:
             user.default_image_query = request_data["default_image_query"]
-        if "summary_bio" in request_data and request_data["summary_bio"]:
-            user.summary_bio = request_data["summary_bio"]
+        if "favorite_topics" in request_data and request_data["favorite_topics"]:
+            user.favorite_topics = request_data["favorite_topics"]
 
         user.put()
 
-        send_success(self.response, json.dumps(user.to_json_ready()))
+        send_success(self.response, json.dumps(user.to_private_json_ready()))
 
     def delete(self, user_id):
 
@@ -102,4 +113,4 @@ class UserHandler(webapp2.RequestHandler):
         send_success(self.response, None)
 
     def get_auth(self):
-        return self.request.query["unsplash_token"]
+        return User.get_by_external_id(get_auth_token(self.request))

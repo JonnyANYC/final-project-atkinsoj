@@ -16,7 +16,7 @@ class User(ndb.Model):
 
     @classmethod
     def get_by_id(cls, user_id):
-        user = ndb.Key(User, long(user_id)).get()
+        user = ndb.Key(cls, long(user_id)).get()
         return user
 
     @classmethod
@@ -26,16 +26,23 @@ class User(ndb.Model):
 
     @classmethod
     def get_by_external_id(cls, external_id):
-        user = cls.query().filter(User.unsplash_token == external_id).fetch(1)
-        return user
 
-    def to_public_json_ready(self):
+        if not external_id:
+            return None
+
+        user = cls.query().filter(cls.unsplash_token == external_id).fetch(1)
+        if user:
+            return user[0]
+        else:
+            return None
+
+    def to_json_ready(self):
         user_public_json_ready = dict(id=self.key.id(), name=self.name, self="/users/" + str(self.key.id()))
         return user_public_json_ready
 
-    def to_json_ready(self):
+    def to_private_json_ready(self):
         # Security is not handled by the model.
         user_json_ready = dict(id=self.key.id(), name=self.name, email=self.email,
-                                 default_image_query=self.default_image_query, favorite_topics=self.favorite_topics,
-                                 self="/users/" + str(self.key.id()))
+                               default_image_query=self.default_image_query, favorite_topics=self.favorite_topics,
+                               self="/users/" + str(self.key.id()), devices="/devices")
         return user_json_ready

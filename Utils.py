@@ -1,6 +1,18 @@
 from unsplash_app_settings import unsplash_app_settings
 
 
+def get_auth_token(request):
+    if "Authorization" not in request.headers:
+        return None
+
+    auth_token = request.headers["Authorization"]
+
+    if not auth_token.startswith("Bearer "):
+        return None
+
+    return auth_token[7:]
+
+
 # Taken from my work on Assignment 3.
 def send_success(response, body):
     if body:

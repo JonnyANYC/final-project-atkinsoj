@@ -1,7 +1,7 @@
 import json
 import webapp2
 from Device import Device
-import User
+from User import User
 from Utils import *
 
 
@@ -10,23 +10,30 @@ from Utils import *
 class DeviceListHandler(webapp2.RequestHandler):
 
     def get(self):
-        user = User.get_by_external_id(self.get_auth())
+        user = self.get_auth()
 
-        # FIXME: Handle missing user
+        if not user:
+            send_error(self.response, 401)
+            return
 
         devices = Device.get_by_user_id(user.key.id())
 
         devices_json = []
         for device in devices:
-            devices_json.append(device.to_json_ready())
+            devices_json.append(device.to_private_json_ready())
 
         send_success(self.response, json.dumps(devices_json))
 
     def post(self):
+        user = self.get_auth()
+
+        if not user:
+            send_error(self.response, 401)
+            return
+
         request_data = json.loads(self.request.body)
 
         # TODO: Not thread-safe!! But probably not an issue in this course.
-        user = User.get_by_external_id(self.get_auth())
         # FIXME: Handle missing use
         existing = Device.query(ancestor=user.key).filter(Device.name == request_data["name"]).fetch(1)
         if existing:
@@ -43,7 +50,7 @@ class DeviceListHandler(webapp2.RequestHandler):
         send_success(self.response, json.dumps(device.to_json_ready()))
 
     def get_auth(self):
-        return self.request.query["token"]
+        return User.get_by_external_id(get_auth_token(self.request))
 
 
 # The basic approach for my entity handlers is taken from my work on Assignment 3.
@@ -53,7 +60,11 @@ class DeviceHandler(webapp2.RequestHandler):
 
         # FIXME: Error handling
 
-        user = User.get_by_external_id(self.get_auth())
+        user = self.get_auth()
+
+        if not user:
+            send_error(self.response, 401)
+            return
 
         # FIXME: Handle auth error (everywhere)
 
@@ -65,15 +76,17 @@ class DeviceHandler(webapp2.RequestHandler):
             send_error(self.response, 404)
             return
 
-        send_success(self.response, json.dumps(device.to_json_ready()))
+        send_success(self.response, json.dumps(device.to_private_json_ready()))
 
     def put(self, device_id):
 
         # FIXME: Error handling
 
-        user = User.get_by_external_id(self.get_auth())
+        user = self.get_auth()
 
-        # FIXME: Handle auth error (everywhere)
+        if not user:
+            send_error(self.response, 401)
+            return
 
         device = Device.get_by_id(user.key.id(), device_id)
 
@@ -89,7 +102,7 @@ class DeviceHandler(webapp2.RequestHandler):
 
         device.put()
 
-        send_success(self.response, json.dumps(device.to_json_ready()))
+        send_success(self.response, json.dumps(device.to_private_json_ready()))
 
     def delete(self, device_id):
 
@@ -100,9 +113,11 @@ class DeviceHandler(webapp2.RequestHandler):
 
         # FIXME: Error handling
 
-        user = User.get_by_external_id(self.get_auth())
+        user = self.get_auth()
 
-        # FIXME: Handle auth error (everywhere)
+        if not user:
+            send_error(self.response, 401)
+            return
 
         device = Device.get_by_id(user.key.id(), device_id)
 
@@ -115,7 +130,7 @@ class DeviceHandler(webapp2.RequestHandler):
         send_success(self.response, None)
 
     def get_auth(self):
-        return self.request.query["token"]
+        return User.get_by_external_id(get_auth_token(self.request))
 
 
 class UnsplashPhoto:
