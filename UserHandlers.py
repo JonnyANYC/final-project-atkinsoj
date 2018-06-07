@@ -44,7 +44,6 @@ class UserListHandler(webapp2.RequestHandler):
         send_success(self.response, json.dumps(user.to_private_json_ready()))
 
 
-# The basic approach for my entity handlers is taken from my work on Assignment 3.
 class UserHandler(webapp2.RequestHandler):
 
     def get(self, user_id):

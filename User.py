@@ -3,9 +3,6 @@ from google.appengine.ext import ndb
 
 # The Model classes were adapted from my work on Assignment 3.
 class User(ndb.Model):
-    """
-    My User model
-    """
 
     # id = auto-gen by Google Cloud Datastore. Unsplash ID is unique, but I don't want to include that in a public key.
     unsplash_token = ndb.StringProperty(required=True)
@@ -16,6 +13,7 @@ class User(ndb.Model):
 
     @classmethod
     def get_by_id(cls, user_id):
+        # FIXME: Is this method redundant???
         user = ndb.Key(cls, long(user_id)).get()
         return user
 

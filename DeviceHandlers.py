@@ -1,4 +1,6 @@
 import json
+import urllib
+
 import webapp2
 from Device import Device
 from User import User
@@ -20,7 +22,7 @@ class DeviceListHandler(webapp2.RequestHandler):
 
         devices_json = []
         for device in devices:
-            devices_json.append(device.to_private_json_ready())
+            devices_json.append(device.to_json_ready())
 
         send_success(self.response, json.dumps(devices_json))
 
@@ -42,9 +44,11 @@ class DeviceListHandler(webapp2.RequestHandler):
                                              "Device name should be unique: {}".format(request_data["name"])))
             return
 
-        device = Device(name=request_data["name"], type=request_data["type"],
-                        width=request_data["width"], height=request_data["height"],
-                        image_query=request_data["image_query"], parent=user.key)
+        # parent assignment taken from the Google Cloud Datastore docs (ndb/creating-entity-keys).
+        # TODO: Move to the model.
+        device = Device(parent=user.key, name=request_data["name"], type=request_data["type"],
+                        width=int(request_data["width"]), height=int(request_data["height"]),
+                        image_query=request_data["image_query"])
         device.put()
 
         send_success(self.response, json.dumps(device.to_json_ready()))
@@ -53,7 +57,6 @@ class DeviceListHandler(webapp2.RequestHandler):
         return User.get_by_external_id(get_auth_token(self.request))
 
 
-# The basic approach for my entity handlers is taken from my work on Assignment 3.
 class DeviceHandler(webapp2.RequestHandler):
 
     def get(self, device_id):
@@ -66,17 +69,42 @@ class DeviceHandler(webapp2.RequestHandler):
             send_error(self.response, 401)
             return
 
-        # FIXME: Handle auth error (everywhere)
-
         device = Device.get_by_id(user.key.id(), device_id)
-
-        # FIXME: Fetch a random image from Unsplash and include in the response.
 
         if not device:
             send_error(self.response, 404)
             return
 
-        send_success(self.response, json.dumps(device.to_private_json_ready()))
+        # FIXME: Fetch a random image from Unsplash and include in the response.
+        # FIXME: Add orientation to the kind
+        headers = dict()  # Authorization="Client-ID " + get_unsplash_app_settings()["access_key"])
+        #headers = dict(Authorization="Bearer " + "3c06d01d86871c04433aa26874c356458123b7304d000c4bccb702033f3c7c2a")  # user.unsplash_token)
+        headers["Accept-Version"] = "v1"
+        payload = dict(per_page=1, query=device.image_query, client_id=get_unsplash_app_settings()["access_key"])
+        photo_search_url = "https://api.unsplash.com/search/photos?" + urllib.urlencode(payload)
+        response_code, response_json = fetch_json(photo_search_url, None, headers)
+
+        if response_code != 200 or not response_json:
+            send_error(self.response, 500, "Unsplash search request failed. e and url and headers: " + str(response_json) + " " + photo_search_url + " " + str(headers))
+            return
+
+        photo_id = response_json["results"][0]["id"]
+        payload = dict(w=device.width, h=device.height, client_id=get_unsplash_app_settings()["access_key"])
+        photo_request_url = "https://api.unsplash.com/photos/" + photo_id + "?" + urllib.urlencode(payload)
+        response_code, response_json = fetch_json(photo_request_url, None, headers)
+
+        if response_code != 200 or not response_json:
+            send_error(self.response, 500, "Unsplash photo request failed")
+            return
+
+        photo_url = response_json["urls"]["custom"]
+        # FIXME: use this class or get rid of it.
+        UnsplashPhoto(device.width, device.height, device.image_query)
+
+        device_json = device.to_json_ready()
+        device_json["photo_url"] = photo_url
+
+        send_success(self.response, json.dumps(device_json))
 
     def put(self, device_id):
 
@@ -96,13 +124,15 @@ class DeviceHandler(webapp2.RequestHandler):
         if "type" in request_data and request_data["type"]:
             device.type = request_data["type"]
         if "height" in request_data and request_data["height"]:
-            device.height = request_data["height"]
+            device.height = int(request_data["height"])
         if "width" in request_data and request_data["width"]:
-            device.width = request_data["width"]
+            device.width = int(request_data["width"])
+        if "image_query" in request_data and request_data["image_query"]:
+            device.image_query = request_data["image_query"]
 
         device.put()
 
-        send_success(self.response, json.dumps(device.to_private_json_ready()))
+        send_success(self.response, json.dumps(device.to_json_ready()))
 
     def delete(self, device_id):
 
@@ -135,13 +165,14 @@ class DeviceHandler(webapp2.RequestHandler):
 
 class UnsplashPhoto:
 
-    def __init__(self, query):
+    def __init__(self, width, height, query):
         self.photo_url = None
         self.photo_title = None
         self.author_name = None
         self.author_profile_url = None
+        self._query(width, height, query)
 
-    def _query(self, query):
+    def _query(self, width, height, query):
         self.photo_url = "https://unsplash.com/photos/D1wiHCovGJ0"
         self.photo_title = "Just Hanging Around"
         self.author_name = "Erda Estremera"

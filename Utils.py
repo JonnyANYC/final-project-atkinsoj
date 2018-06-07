@@ -1,3 +1,6 @@
+import json
+import urllib2
+
 from unsplash_app_settings import unsplash_app_settings
 
 
@@ -38,5 +41,21 @@ def response_message_json(status, message):
     return '{"status": "' + status + '", "message": "' + message + '"}'
 
 
+# Taken from my work on Assignment 4.
+def fetch_json(url, data=None, headers=None):
+
+    try:
+        fh = urllib2.urlopen(url, data, headers)
+    except urllib2.HTTPError as e:
+        # Handle non-2xx responses in the bizarre way urllib2 wants us to
+        fh = e
+
+    response_code = fh.getcode()
+    response = fh.read()
+    response_body = json.loads(response)
+    return response_code, response_body
+
+
 def get_unsplash_app_settings():
+    # keys are hidden locally
     return unsplash_app_settings()
