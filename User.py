@@ -6,10 +6,11 @@ class User(ndb.Model):
 
     # id = auto-gen by Google Cloud Datastore. Unsplash ID is unique, but I don't want to include that in a public key.
     unsplash_token = ndb.StringProperty(required=True)
+    unsplash_username = ndb.StringProperty(required=True)
     name = ndb.StringProperty(required=True)
-    email = ndb.StringProperty()
+    location = ndb.StringProperty()
+    url = ndb.StringProperty()
     default_image_query = ndb.StringProperty(required=True)
-    favorite_topics = ndb.StringProperty()
 
     @classmethod
     def get_by_id(cls, user_id):
@@ -35,12 +36,13 @@ class User(ndb.Model):
             return None
 
     def to_json_ready(self):
-        user_public_json_ready = dict(id=self.key.id(), name=self.name, self="/users/" + str(self.key.id()))
-        return user_public_json_ready
+        user_json_ready = dict(id=self.key.id(), name=self.name, unsplash_username=self.unsplash_username,
+                               location=self.location, self="/users/" + str(self.key.id()))
+        return user_json_ready
 
     def to_private_json_ready(self):
         # Security is not handled by the model.
-        user_json_ready = dict(id=self.key.id(), name=self.name, email=self.email,
-                               default_image_query=self.default_image_query, favorite_topics=self.favorite_topics,
+        user_json_ready = dict(id=self.key.id(), unsplash_username=self.unsplash_username, name=self.name,
+                               location=self.location, url=self.url, default_image_query=self.default_image_query,
                                self="/users/" + str(self.key.id()), devices="/devices")
         return user_json_ready

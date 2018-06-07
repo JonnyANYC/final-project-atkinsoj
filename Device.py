@@ -6,15 +6,16 @@ class Device(ndb.Model):
     # id = auto-gen by Google Cloud Datastore, because device name can change.
     # parent = User
     name = ndb.StringProperty(required=True)
-    type = ndb.StringProperty(required=True)
     width = ndb.IntegerProperty(required=True)
     height = ndb.IntegerProperty(required=True)
+    orientation = ndb.StringProperty(required=True)
     image_query = ndb.StringProperty(required=True)
 
     @classmethod
     def get_by_user_id(cls, user_id):
-        # FIXME: Accept a key instead. I think in most/all cases I already have the user key.
+        # TODO: Accept a key instead. I think in most/all cases I already have the user key.
         user_key = ndb.Key(User, long(user_id))
+        # Ancestor query logic taken from the Google Cloud Datastore documentation.
         devices = cls.query(ancestor=user_key).fetch(30)
         return devices
 
@@ -26,7 +27,7 @@ class Device(ndb.Model):
         return device
 
     def to_json_ready(self):
-        device_json_ready = dict(id=self.key.id(), name=self.name, type=self.type, width=self.width, height=self.height,
-                                 image_query=self.image_query, owner="/users/" + str(self.key.parent().id()),
-                                 self="/devices/" + str(self.key.id()))
+        device_json_ready = dict(id=self.key.id(), name=self.name, width=self.width, height=self.height,
+                                 oriengation=self.orientation, image_query=self.image_query,
+                                 owner="/users/" + str(self.key.parent().id()), self="/devices/" + str(self.key.id()))
         return device_json_ready
