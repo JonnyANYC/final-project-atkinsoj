@@ -1,11 +1,8 @@
-import json
 from urllib import urlencode
-
 import webapp2
 import Device
 from User import User
 from Utils import *
-import logging
 
 
 # The basic approach for my list handlers is taken from my work on Assignment 3.
@@ -45,7 +42,8 @@ class UserListHandler(webapp2.RequestHandler):
             request_data["url"] = None
 
         unsplash_user = UnsplashUser(request_data["unsplash_username"], request_data["name"],
-                                     request_data["location"], request_data["url"]),
+                                     request_data["location"], request_data["url"])
+        unsplash_user.lookup_unsplash_profile()
 
         user = User(unsplash_token=request_data["unsplash_token"], name=unsplash_user.name,
                     unsplash_username=request_data["unsplash_username"], location=unsplash_user.location,
@@ -141,10 +139,7 @@ class UnsplashUser:
         self.location = location
         self.url = url
 
-        if (not name) or (not location) or (not url):
-            self._lookup_unsplash_profile()
-
-    def _lookup_unsplash_profile(self):
+    def lookup_unsplash_profile(self):
 
         headers = dict()  # Authorization="Client-ID " + get_unsplash_app_settings()["access_key"])
         headers["Accept-Version"] = "v1"
@@ -159,5 +154,7 @@ class UnsplashUser:
             self.name = response_json["name"]
         if (not self.location) and response_json["location"]:
             self.location = response_json["location"]
-        if (not self.url) and response_json["profile_url"]:
-            self.url = response_json["profile_url"]
+        if (not self.url) and response_json["portfolio_url"]:
+            self.url = response_json["portfolio_url"]
+
+        return self

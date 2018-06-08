@@ -1,6 +1,4 @@
-import json
 import urllib
-
 import webapp2
 from Device import Device
 from User import User
@@ -50,7 +48,17 @@ class DeviceListHandler(webapp2.RequestHandler):
                         image_query=request_data["image_query"])
         device.put()
 
-        send_success(self.response, json.dumps(device.to_json_ready()))
+        photo = UnsplashPhoto()
+        photo.query(device.width, device.height, device.orientation, device.image_query)
+
+        if photo.response_code != 200:
+            send_error(self.response, 500, photo.response_json)
+            return
+
+        device_json = device.to_json_ready()
+        device_json["photo_url"] = photo.photo_url
+
+        send_success(self.response, json.dumps(device_json))
 
     def get_auth(self):
         return User.get_by_external_id(get_auth_token(self.request))
