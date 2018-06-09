@@ -1,6 +1,6 @@
 from urllib import urlencode
 import webapp2
-import Device
+from Device import Device
 from User import User
 from Utils import *
 
@@ -34,6 +34,7 @@ class UserListHandler(webapp2.RequestHandler):
             return
 
         # Set empty values in the input if they need to be overridden by the data in Unsplash.
+        # TODO: Extract method
         if "name" not in request_data:
             request_data["name"] = None
         if "location" not in request_data:
@@ -41,6 +42,7 @@ class UserListHandler(webapp2.RequestHandler):
         if "url" not in request_data:
             request_data["url"] = None
 
+        # Fetch the user details from Unsplash, and default to those values if the POST is missing anything.
         unsplash_user = UnsplashUser(request_data["unsplash_username"], request_data["name"],
                                      request_data["location"], request_data["url"])
         unsplash_user.lookup_unsplash_profile()
@@ -59,8 +61,6 @@ class UserHandler(webapp2.RequestHandler):
 
         user = User.get_by_id(long(user_id))
 
-        # FIXME: Error handling
-
         if not user:
             send_error(self.response, 404)
             return
@@ -76,8 +76,6 @@ class UserHandler(webapp2.RequestHandler):
 
         user = User.get_by_id(user_id)
 
-        # FIXME: Error handling
-
         if not user:
             send_error(self.response, 404)
             return
@@ -87,9 +85,10 @@ class UserHandler(webapp2.RequestHandler):
             send_error(self.response, 401)
             return
 
-        # FIXME: Fetch Unsplash profile and use those values where needed
+        # Unsplash profile data is only used at account creation (POST /users).
 
         request_data = json.loads(self.request.body)
+
         if "name" in request_data and request_data["name"]:
             user.name = request_data["name"]
         if "location" in request_data and request_data["location"]:
@@ -115,8 +114,6 @@ class UserHandler(webapp2.RequestHandler):
         if (not auth_user) or auth_user.key.id() != user.key.id():
             send_error(self.response, 401)
             return
-
-        # FIXME: Error handling
 
         # Delete devices as well.
         devices = Device.get_by_user_id(user_id)

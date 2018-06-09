@@ -68,8 +68,6 @@ class DeviceHandler(webapp2.RequestHandler):
 
     def get(self, device_id):
 
-        # FIXME: Error handling
-
         user = self.get_auth()
 
         if not user:
@@ -96,8 +94,6 @@ class DeviceHandler(webapp2.RequestHandler):
 
     def put(self, device_id):
 
-        # FIXME: Error handling
-
         user = self.get_auth()
 
         if not user:
@@ -105,6 +101,10 @@ class DeviceHandler(webapp2.RequestHandler):
             return
 
         device = Device.get_by_id(user.key.id(), device_id)
+
+        if not device:
+            send_error(self.response, 404)
+            return
 
         request_data = json.loads(self.request.body)
         if "name" in request_data and request_data["name"]:
@@ -133,8 +133,6 @@ class DeviceHandler(webapp2.RequestHandler):
         send_success(self.response, json.dumps(device_json))
 
     def delete(self, device_id):
-
-        # TODO: Error handling
 
         user = self.get_auth()
 

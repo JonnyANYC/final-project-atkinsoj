@@ -28,6 +28,6 @@ class Device(ndb.Model):
 
     def to_json_ready(self):
         device_json_ready = dict(id=self.key.id(), name=self.name, width=self.width, height=self.height,
-                                 oriengation=self.orientation, image_query=self.image_query,
+                                 orientation=self.orientation, image_query=self.image_query,
                                  owner="/users/" + str(self.key.parent().id()), self="/devices/" + str(self.key.id()))
         return device_json_ready
