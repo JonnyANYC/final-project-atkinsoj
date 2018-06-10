@@ -66,7 +66,7 @@ class DeviceListHandler(webapp2.RequestHandler):
 
 class DeviceHandler(webapp2.RequestHandler):
 
-    def get(self, device_id):
+    def get(self, device_id_urlsafe):
 
         user = self.get_auth()
 
@@ -74,7 +74,7 @@ class DeviceHandler(webapp2.RequestHandler):
             send_error(self.response, 401)
             return
 
-        device = Device.get_by_id(user.key.id(), device_id)
+        device = Device.get_by_user_and_urlsafe_id(user.key.id(), device_id_urlsafe)
 
         if not device:
             send_error(self.response, 404)
@@ -92,7 +92,7 @@ class DeviceHandler(webapp2.RequestHandler):
 
         send_success(self.response, json.dumps(device_json))
 
-    def put(self, device_id):
+    def put(self, device_id_urlsafe):
 
         user = self.get_auth()
 
@@ -100,7 +100,7 @@ class DeviceHandler(webapp2.RequestHandler):
             send_error(self.response, 401)
             return
 
-        device = Device.get_by_id(user.key.id(), device_id)
+        device = Device.get_by_user_and_urlsafe_id(user.key.id(), device_id_urlsafe)
 
         if not device:
             send_error(self.response, 404)
@@ -132,7 +132,7 @@ class DeviceHandler(webapp2.RequestHandler):
 
         send_success(self.response, json.dumps(device_json))
 
-    def delete(self, device_id):
+    def delete(self, device_id_urlsafe):
 
         user = self.get_auth()
 
@@ -140,7 +140,7 @@ class DeviceHandler(webapp2.RequestHandler):
             send_error(self.response, 401)
             return
 
-        device = Device.get_by_id(user.key.id(), device_id)
+        device = Device.get_by_user_and_urlsafe_id(user.key.id(), device_id_urlsafe)
 
         if not device:
             send_error(self.response, 404)

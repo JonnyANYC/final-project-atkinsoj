@@ -74,7 +74,7 @@ class UserHandler(webapp2.RequestHandler):
 
     def put(self, user_id):
 
-        user = User.get_by_id(user_id)
+        user = User.get_by_id(long(user_id))
 
         if not user:
             send_error(self.response, 404)
@@ -104,7 +104,7 @@ class UserHandler(webapp2.RequestHandler):
 
     def delete(self, user_id):
 
-        user = User.get_by_id(user_id)
+        user = User.get_by_id(long(user_id))
 
         if not user:
             send_error(self.response, 404)

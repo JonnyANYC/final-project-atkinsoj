@@ -17,5 +17,5 @@ app = webapp2.WSGIApplication([
     ('/users', UserListHandler),
     ('/users/(\d+)', UserHandler),
     ('/devices', DeviceListHandler),
-    ('/devices/(\d+)', DeviceHandler),
+    ('/devices/([\w-]+)', DeviceHandler),
 ], debug=True)

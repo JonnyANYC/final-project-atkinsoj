@@ -13,12 +13,6 @@ class User(ndb.Model):
     default_image_query = ndb.StringProperty(required=True)
 
     @classmethod
-    def get_by_id(cls, user_id):
-        # FIXME: Is this method redundant???
-        user = ndb.Key(cls, long(user_id)).get()
-        return user
-
-    @classmethod
     def get_all(cls):
         users = cls.query().fetch(30)
         return users
